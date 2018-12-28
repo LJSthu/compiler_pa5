@@ -112,7 +112,7 @@ class InferenceGraph {
 
 
 	void makeGraph() {
-		// First identify all nodes. 
+		// First identify all nodes.
 		// Each value is a node.
 		makeNodes();
 		// Then build inference edges:
@@ -124,17 +124,34 @@ class InferenceGraph {
 	void makeNodes() {
 		for (Tac tac = bb.tacList; tac != null; tac = tac.next) {
 			switch (tac.opc) {
-				case ADD: case SUB: case MUL: case DIV: case MOD:
-				case LAND: case LOR: case GTR: case GEQ: case EQU:
-				case NEQ: case LEQ: case LES:
-					addNode(tac.op0); addNode(tac.op1); addNode(tac.op2);
+				case ADD:
+				case SUB:
+				case MUL:
+				case DIV:
+				case MOD:
+				case LAND:
+				case LOR:
+				case GTR:
+				case GEQ:
+				case EQU:
+				case NEQ:
+				case LEQ:
+				case LES:
+					addNode(tac.op0);
+					addNode(tac.op1);
+					addNode(tac.op2);
 					break;
 
-				case NEG: case LNOT: case ASSIGN:
-					addNode(tac.op0); addNode(tac.op1);
+				case NEG:
+				case LNOT:
+				case ASSIGN:
+					addNode(tac.op0);
+					addNode(tac.op1);
 					break;
 
-				case LOAD_VTBL: case LOAD_IMM4: case LOAD_STR_CONST:
+				case LOAD_VTBL:
+				case LOAD_IMM4:
+				case LOAD_STR_CONST:
 					addNode(tac.op0);
 					break;
 
@@ -152,10 +169,14 @@ class InferenceGraph {
 
 				case LOAD:
 				case STORE:
-					addNode(tac.op0); addNode(tac.op1);
+					addNode(tac.op0);
+					addNode(tac.op1);
 					break;
 
-				case BRANCH: case BEQZ: case BNEZ: case RETURN:
+				case BRANCH:
+				case BEQZ:
+				case BNEZ:
+				case RETURN:
 					throw new IllegalArgumentException();
 			}
 		}
@@ -164,28 +185,66 @@ class InferenceGraph {
 
 	// With your definition of inference graphs, build the edges.
 	void makeEdges() {
+		for (Temp tmp1 : bb.liveUse) {
+			for (Temp tmp2 : bb.liveUse) {
+				if (tmp1 != tmp2 && nodes.contains(tmp1) && nodes.contains(tmp2) && !neighbours.get(tmp1).contains(tmp2)) {
+					addEdge(tmp1, tmp2);
+				}
+			}
+		}
 		for (Tac tac = bb.tacList; tac != null; tac = tac.next) {
 			switch (tac.opc) {
-				case ADD: case SUB: case MUL: case DIV: case MOD:
-				case LAND: case LOR: case GTR: case GEQ: case EQU:
-				case NEQ: case LEQ: case LES:
-
-				case NEG: case LNOT: case ASSIGN:
-
-				case LOAD_VTBL: case LOAD_IMM4: case LOAD_STR_CONST:
-
+				case ADD:
+				case SUB:
+				case MUL:
+				case DIV:
+				case MOD:
+				case LAND:
+				case LOR:
+				case GTR:
+				case GEQ:
+				case EQU:
+				case NEQ:
+				case LEQ:
+				case LES:
+					for (Temp tmp :
+							tac.liveOut) {
+						if (neighbours.containsKey(tmp))
+							addEdge(tac.op0, tmp);
+					}
+					break;
+				case NEG:
+				case LNOT:
+				case ASSIGN:
 				case INDIRECT_CALL:
-
+					if (tac.op0 != null) {
+						for (Temp tmp :
+								tac.liveOut) {
+							if (neighbours.containsKey(tmp))
+								addEdge(tac.op0, tmp);
+						}
+					}
+					break;
+				case LOAD_VTBL:
+				case LOAD_IMM4:
+				case LOAD_STR_CONST:
 				case DIRECT_CALL:
-
-				case PARM:
-
 				case LOAD:
-
+					if (tac.op0 != null) {
+						for (Temp tmp :
+								tac.liveOut) {
+							if (neighbours.containsKey(tmp))
+								addEdge(tac.op0, tmp);
+						}
+					}
+					break;
+				case PARM:
 				case STORE:
 					break;
-
-				case BRANCH: case BEQZ: case BNEZ: case RETURN:
+				case BRANCH:
+				case BEQZ:
+				case BNEZ:
+				case RETURN:
 					throw new IllegalArgumentException();
 			}
 		}
