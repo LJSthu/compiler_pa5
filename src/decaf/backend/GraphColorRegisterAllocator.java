@@ -40,9 +40,8 @@ public class GraphColorRegisterAllocator implements RegisterAllocator {
 		// But before that, you have to do something.
 		InferenceGraph graph = new InferenceGraph();
 		graph.alloc(bb, regs, fp.reg);
-		for (Temp tmp :
-				bb.liveUse) {
-			load(bb.tacList, tmp);
+		for (Temp reg: bb.liveUse) {
+			load(bb.tacList, reg);
 		}
 
 		Tac tail = null;
