@@ -188,9 +188,10 @@ class InferenceGraph {
 				case LAND: case LOR: case GTR: case GEQ: case EQU:
 				case NEQ: case LEQ: case LES:
 					for (Temp reg: tac.liveOut) {
-						if (neighbours.containKey(reg)) {
+						if (neighbours.containsKey(reg)) {
 							addEdge(tac.op0, reg);
 						}
+					}
 					break;
 				case NEG: case LNOT: case ASSIGN: case INDIRECT_CALL:
 				case LOAD_VTBL: case LOAD_IMM4: case LOAD_STR_CONST:
