@@ -161,27 +161,49 @@ class InferenceGraph {
 		}
 	}
 
+	/**
+	 * judge for whether to add an edge
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	boolean judgeEdge(Temp a, Temp b) {
+		if (a != b && nodes.contains(a) && nodes.contains(b) && !neighbours.get(a).contains(b))
+			return true;
+		else return false;
+	}
+
 
 	// With your definition of inference graphs, build the edges.
 	void makeEdges() {
+		for (Temp first: bb.liveUse) {
+			for (Temp second: bb.liveUse) {
+                if (judgeEdge(first, second))
+                	addEdge(first, second);
+			}
+		}
 		for (Tac tac = bb.tacList; tac != null; tac = tac.next) {
 			switch (tac.opc) {
 				case ADD: case SUB: case MUL: case DIV: case MOD:
 				case LAND: case LOR: case GTR: case GEQ: case EQU:
 				case NEQ: case LEQ: case LES:
-
-				case NEG: case LNOT: case ASSIGN:
-
+					for (Temp reg: tac.liveOut) {
+						if (neighbours.containKey(reg)) {
+							addEdge(tac.op0, reg);
+						}
+					break;
+				case NEG: case LNOT: case ASSIGN: case INDIRECT_CALL:
 				case LOAD_VTBL: case LOAD_IMM4: case LOAD_STR_CONST:
-
-				case INDIRECT_CALL:
-
-				case DIRECT_CALL:
+				case DIRECT_CALL: case LOAD:
+					if (tac.op0 != null) {
+						for (Temp reg: tac.liveOut) {
+							if (neighbours.containsKey(reg))
+								addEdge(tac.op0, reg);
+						}
+					}
+					break;
 
 				case PARM:
-
-				case LOAD:
-
 				case STORE:
 					break;
 
